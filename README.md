@@ -1,8 +1,15 @@
 # random-sleep
 Sleep for a (configurable) random amount of time.
 
+# Rationale
+Solitary, self-isolated life under 👾COVID-19 is too deterministic. Spice up your life with **REAL** randomness 🤯! For instance, to take a coffee break in *about* half-an-hour, I use something like:
+```
+rlseep 1800 60 && play sound.ogg
+```
+See below for the usage in more detail.
+
 # Usage
-```bash
+```
 rsleep [MU] [SIGMA]
 ```
 Pause for a random number of seconds.
