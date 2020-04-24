@@ -4,6 +4,7 @@ module Main where
 
 import Control.Concurrent (threadDelay)
 import Data.Aeson
+import Data.Char (isDigit)
 import qualified Data.ByteString.Lazy as B
 import Data.ByteString.Lazy.Char8 (pack)
 import Data.Word (Word8)
@@ -11,6 +12,7 @@ import GHC.IO.Exception (ExitCode (..))
 import Network.HTTP
 import System.Environment
 import System.IO (hPutStrLn, stderr)
+import Text.Read (readMaybe)
 
 -- | Performs a Box–Muller transform, obtaining
 -- a sample from a normal distribution starting from
@@ -57,30 +59,52 @@ fromANU_QRNG = do
   let Just res = decode $ pack getR
   return res
 
+readTime :: String -> Maybe Double
+readTime s = 
+  case reverse s of
+    [] -> Nothing
+    's':xs -> readMaybe $ reverse xs
+    'm':xs -> (60.0 *) <$> (readMaybe $ reverse xs)
+    'h':xs -> (3600.0 *) <$> (readMaybe $ reverse xs)
+    'd':xs -> (86400.0 *) <$> (readMaybe $ reverse xs)
+    x:xs
+      | isDigit x -> readMaybe s
+      | otherwise -> Nothing
+
 
 main :: IO ExitCode
 main = do
   args <- getArgs
   case args of 
     [mu', sigma'] -> do
-      mu <- readIO mu'
-      sigma <- readIO sigma'
-      NormalDistr nd <- fromANU_QRNG
-      let s = nd mu sigma
-      let ms = max (round (s * 1000000)) 0
-      logerr ("Sleeping for " ++ show (fromIntegral ms / 1000000) ++ " seconds...")
-      threadDelay ms
-      return ExitSuccess
-    _ -> do
-      logerr "Wrong number of arguments!"
+      case (readTime mu', readTime sigma') of
+        (Just mu, Just sigma) -> do
+          NormalDistr nd <- fromANU_QRNG
+          let s = nd mu sigma
+          let ms = max (round (s * 1000000)) 0
+          -- logerr ("Sleeping for " ++ show (fromIntegral ms / 1000000) ++ " seconds...")
+          threadDelay ms
+          return ExitSuccess
+        _ -> do
+          logerr "rsleep: wrong operands"
+          logerr "Try 'rsleep --help' for more information."
+          return $ ExitFailure 1
+    ["--help"] -> do
       logerr "Usage: rsleep [MU] [SIGMA]"
       logerr "\
 \Pause for a random number of seconds. The random number \
 \of seconds is sampled from a normal distribution of mean MU and \
 \standard deviation SIGMA. The random data is obtained \
 \from the ANU Quantum Random Numbers Server \
-\(visit http://qrng.anu.edu.au)."
-      return (ExitFailure 1)
+\(visit http://qrng.anu.edu.au).\n\
+\MU and SIGMA are arbitrary floating point numbers, with an \
+\optional suffix that may be 's' for seconds (the default), \
+\'m' for minutes, 'h' for hours or 'd' for days."
+      return $ ExitFailure 1
+    _ -> do
+      logerr "rsleep: wrong operands"
+      logerr "Try 'rsleep --help' for more information."
+      return $ ExitFailure 1 
 
 logerr :: String -> IO ()
 logerr x = hPutStrLn stderr x
