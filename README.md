@@ -19,7 +19,3 @@ The random number of seconds is sampled from a normal distribution of mean `MU` 
 `m` for minutes, `h` for hours or `d` for days.
 
 The random data is currently obtained from the [ANU Quantum Random Numbers Server](http://qrng.anu.edu.au).
-
-# TODO
-- Support for more sources of randomness
-- Support for more probability distributions
