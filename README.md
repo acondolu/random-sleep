@@ -1,4 +1,4 @@
-# random-sleep
+# random-sleep [![Build Status](https://travis-ci.com/acondolu/random-sleep.svg?branch=master)](https://travis-ci.com/acondolu/random-sleep)
 Sleep for a (configurable) random amount of time.
 
 # Rationale
