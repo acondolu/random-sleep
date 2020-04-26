@@ -1,0 +1,9 @@
+Package: random-sleep
+Version: XXX
+Section: base
+Priority: optional
+Architecture: amd64
+Maintainer: Andrea Condoluci <andreacondoluci@gmail.com>
+Description: Random sleep
+ Sleep for a (configurable) random amount of time.
+Homepage: https://github.com/acondolu/random-sleep
