@@ -16,18 +16,18 @@ import Text.Read (readMaybe)
 
 -- | Performs a Box–Muller transform, obtaining
 -- a sample from a normal distribution starting from
--- a pair of samples from the uniform distribution 
+-- a pair of samples from the uniform distribution
 -- on the interval [0, 1]
 transform
   :: Double
-  -> Double 
+  -> Double
   -> Double -- ^ the mean (mu)
   -> Double -- ^ the standard deviation (sigma)
   -> Double
 transform u1 u2 mu sigma =
   sqrt ((-2) * log u1) * cos (2 * pi * u2) * sigma + mu
 
-data NormalDistr =
+newtype NormalDistr =
   NormalDistr
     ( Double -- ^ the mean (mu)
     -> Double -- ^ the standard deviation (sigma)
@@ -60,22 +60,27 @@ fromANU_QRNG = do
   return res
 
 readTime :: String -> Maybe Double
-readTime s = 
+readTime s =
   case reverse s of
     [] -> Nothing
     's':xs -> readMaybe $ reverse xs
-    'm':xs -> (60.0 *) <$> (readMaybe $ reverse xs)
-    'h':xs -> (3600.0 *) <$> (readMaybe $ reverse xs)
-    'd':xs -> (86400.0 *) <$> (readMaybe $ reverse xs)
+    'm':xs -> (60.0 *) <$> readMaybe (reverse xs)
+    'h':xs -> (3600.0 *) <$> readMaybe (reverse xs)
+    'd':xs -> (86400.0 *) <$> readMaybe (reverse xs)
     x:xs
       | isDigit x -> readMaybe s
       | otherwise -> Nothing
 
+failWrongOperands :: IO ExitCode
+failWrongOperands = do
+  logerr "rsleep: wrong operands"
+  logerr "Try 'rsleep --help' for more information."
+  return $ ExitFailure 1
 
 main :: IO ExitCode
 main = do
   args <- getArgs
-  case args of 
+  case args of
     [mu', sigma'] -> do
       case (readTime mu', readTime sigma') of
         (Just mu, Just sigma) -> do
@@ -85,10 +90,7 @@ main = do
           -- logerr ("Sleeping for " ++ show (fromIntegral ms / 1000000) ++ " seconds...")
           threadDelay ms
           return ExitSuccess
-        _ -> do
-          logerr "rsleep: wrong operands"
-          logerr "Try 'rsleep --help' for more information."
-          return $ ExitFailure 1
+        _ -> failWrongOperands
     ["--help"] -> do
       logerr "Usage: rsleep [MU] [SIGMA]"
       logerr "\
@@ -101,10 +103,7 @@ main = do
 \optional suffix that may be 's' for seconds (the default), \
 \'m' for minutes, 'h' for hours or 'd' for days."
       return $ ExitFailure 1
-    _ -> do
-      logerr "rsleep: wrong operands"
-      logerr "Try 'rsleep --help' for more information."
-      return $ ExitFailure 1 
+    _ -> failWrongOperands
 
 logerr :: String -> IO ()
-logerr x = hPutStrLn stderr x
+logerr = hPutStrLn stderr
